@@ -5,9 +5,10 @@
 
 Вся статистика ведется в excel документе dnevnik.xlsx. Программа каждый день создает новый лист с текущей датой, в который заносится информация о проведенном времени за ПК. Функция `write_excel` делает запись каждый раз, когда посещение за компьютером превышает минимально заданное время (переменная min_time).
 <p align="center">
-  <img src="screenshot_readme/excel_2.png" height="500" width="400"/></div>
+  <img src="screenshot_readme/excel_2.png" height="400" width="500"/></div>
 </p>
 На 1 листе записывается посуточная информация, в какой день сколько времени вы провели.
+
 <p align="center">
   <img src="screenshot_readme/excel_1.png" height="400" width="400"/></div>
 </p>
