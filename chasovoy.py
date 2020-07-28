@@ -1,31 +1,38 @@
 import cv2
 import openpyxl
 import winsound
-from datetime import datetime, timedelta
 import time
 import os
 import random
+from mtcnn.mtcnn import MTCNN
 
 
-def audio_message(path, time_start, hour):
-    if time_start is None:
-        hour = 1
-    if time_here // 3600 == hour:
+def audio_message(path, time_start):
+    if round(time_start) % 3600 == 0 and round(time_start) != 0:  # каждый час выдаем звуковое оповещение
         wav = random.choice(os.listdir(path + r'\audio'))
         winsound.PlaySound(path + r'\audio\\' + wav, winsound.SND_FILENAME)
-        hour = time_here // 3600 + 1
-    return hour
 
 
 def show_face_frame():
     if len(faces) > 0:
-        for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        bounding_box = faces[0]['box']
+        keypoints = faces[0]['keypoints']
+        cv2.rectangle(img,
+                      (bounding_box[0], bounding_box[1]),
+                      (bounding_box[0] + bounding_box[2], bounding_box[1] + bounding_box[3]),
+                      (0, 0, 255),
+                      2)
+        cv2.circle(img, (keypoints['left_eye']), 3, (0, 0, 255), 2)
+        cv2.circle(img, (keypoints['right_eye']), 2, (0, 0, 255), 2)
+        cv2.circle(img, (keypoints['nose']), 3, (0, 0, 255), 2)
+        cv2.circle(img, (keypoints['mouth_left']), 3, (0, 0, 255), 2)
+        cv2.circle(img, (keypoints['mouth_right']), 3, (0, 0, 255), 2)
+    cv2.imshow('frame', img)
 
 
-def write_excel(path_excel, start):
+def write_excel(path_excel, time_start):
     wb = openpyxl.load_workbook(path_excel + r'\dnevnik.xlsx')
-    today = datetime.strftime(start, '%d.%m.%Y')
+    today = time.strftime("%d.%m.%Y", time.localtime(time.time()))
     if today not in wb.sheetnames:  # если листа с сегодняшней датой еще не существует, то создаем его
         wb.create_sheet(title=today)
         sheet = wb[today]
@@ -36,8 +43,8 @@ def write_excel(path_excel, start):
         sheet['A1'] = 'Начал работать за ПК'
         sheet['B1'] = 'Время работы за ПК'
         sheet['C1'] = 'Закончил работать'
-        sheet['D1'] = 'Сели за компьютер:'
-        sheet['D2'] = 'Всего провели за компьютером:'
+        sheet['D1'] = 'Сел за компьютер:'
+        sheet['D2'] = 'Всего провели за ПК времени:'
         sheet = wb[today]
         row = 2
         all_time = 0
@@ -49,12 +56,9 @@ def write_excel(path_excel, start):
         all_time = int(all_time[0]) * 3600 + int(all_time[1]) * 60 + int(all_time[2])  # время переводим в секунды
         row = row + 2  # плюсуем шапку таблицы и новую строку
 
-    sheet['A' + str(row)] = datetime.strftime(start, '%H:%M:%S')  # записываем время когда сели за пк
-    sheet['C' + str(row)] = datetime.strftime(datetime.now(), '%H:%M:%S')  # когда вышли из за пк
-    print('закончили работать в ' + datetime.strftime(datetime.now(), '%H:%M:%S'))
-    time_count = datetime.now() - start  # время которое мы провели за компьютером
-    seconds = time_count.seconds
-    print('вы провели за компьютером ' + time.strftime('%H:%M:%S', time.gmtime(seconds)))
+    sheet['A' + str(row)] = time.strftime("%H:%M:%S", time.localtime(time_start))  # записываем время когда сели за пк
+    sheet['C' + str(row)] = time.strftime("%H:%M:%S", time.localtime(time.time()))  # когда вышли из за пк
+    seconds = time.time() - time_start  # время которое мы провели за компьютером
     sheet['B' + str(row)] = time.strftime('%H:%M:%S', time.gmtime(seconds))
     sheet['E1'] = row - 1  # вычитаем шапку таблицу
     all_time = all_time + seconds
@@ -74,61 +78,53 @@ def write_excel(path_excel, start):
 
 
 cap = cv2.VideoCapture(0)
-path = r'C:\Users\Voronov\YandexDisk-euge.voronov@yandex.ru\Manual\Project\chasovoy'
-faceCascade = cv2.CascadeClassifier(path + r'\haarcascade_frontalface_default.xml')
+path = r'C:\Users\VoronovEV\YandexDisk-euge.voronov@yandex.ru\Manual\Project\chasovoy'  # Укажите свой абсолютный путь
 
-time_here, time_not_here = 0, 0  # подсчет времени когда человек за компьютером и когда его там нет.
-here, not_here = 0, 0
-min_time = 60
-time_start = None
-status = True
-hour = 1
+here, not_here = 0, 0  # секундомеры
+time_here, time_not_here = 0, 0  # количество времени
+switch = True  # переключатель определяет есть лицо в кадре или нет
+min_time = 60  # минимально время которое не учитывается (в секундах)
+
+detector = MTCNN()
 
 try:
     while True:
         ret, img = cap.read()
         if ret == 0:
             break
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = faceCascade.detectMultiScale(img_gray, scaleFactor=1.3, minNeighbors=3, minSize=(30, 30))
-
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        faces = detector.detect_faces(img)
         show_face_frame()
-        hour = audio_message(path, time_start, hour)
+        audio_message(path, time_here)
 
-        if len(faces) > 0 and status:
+        if len(faces) > 0 and switch:
             not_here = 0
-            status = False
-            if time_start is None:
+            switch = False
+            if here == 0:
                 here = time.time()
-                time_start = datetime.now()
-                print('вы сели за компьютер в ' + datetime.strftime(time_start, '%H:%M:%S'))
-        elif len(faces) == 0 and not status:
+                print('вы сели за компьютер в ' + time.strftime("%H:%M:%S", time.localtime(here)))
+        elif len(faces) == 0 and not switch:
             not_here = time.time()
-            status = True
+            switch = True
 
         if not_here != 0:
             time_not_here = time.time() - not_here
-        if here != 0 and not status:
+        if here != 0 and not switch:
             time_here = time.time() - here
-        # print(str(time_here) + 'here')
-        # print(str(time_not_here) + 'not_here')
-        # time.sleep(0.2)
 
-        if time_here > min_time and time_not_here > min_time:  # делаем запись если провели за ПК больше минуты
-            write_excel(path, time_start)
+        if time_here > min_time and time_not_here > min_time:  # делаем запись если провели за ПК больше min_time
+            write_excel(path, here)
+            print('вы провели за компьютером ' + time.strftime('%H:%M:%S', time.gmtime(time.time() - here)))
             time_here, time_not_here = 0, 0
-            not_here = 0
-            time_start = None
-        elif time_not_here > min_time > time_here:  # если за ПК провели времени меньше минуты, то ничего не записываем
+            here, not_here = 0, 0
+        elif time_not_here > min_time > time_here:  # если за ПК провели меньше min_time, то ничего не записываем
             print('запись не произведена')
             time_here, time_not_here = 0, 0
-            not_here = 0
-            time_start = None
+            here, not_here = 0, 0
 
-        # cv2.imshow('frame', img)
         cv2.waitKey(1)
 except KeyboardInterrupt:
     if time_here > min_time:  # делаем запись если провели за ПК больше минуты
-        write_excel(path, time_start)
+        write_excel(path, here)
     cap.release()
     cv2.destroyAllWindows()
