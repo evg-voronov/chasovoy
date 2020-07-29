@@ -80,7 +80,7 @@ def write_excel(path_excel, time_start):
 
 
 cap = cv2.VideoCapture(0)
-path = r'C:\Users\VoronovEV\YandexDisk-euge.voronov@yandex.ru\Manual\Project\chasovoy'  # Укажите свой абсолютный путь
+path = os.path.abspath(__file__)[:-11]  # удаляем имя файла
 
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
@@ -94,7 +94,7 @@ try:
         _, img = cap.read()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = detector.detect_faces(img)
-        show_face_frame()
+        #show_face_frame()
         audio_message(path, here)
 
         if faces and switch:
