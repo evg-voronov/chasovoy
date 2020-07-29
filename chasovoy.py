@@ -7,14 +7,14 @@ import random
 from mtcnn.mtcnn import MTCNN
 
 
-def audio_message(path, time_start):
-    if round(time_start) % 3600 == 0 and round(time_start) != 0:  # каждый час выдаем звуковое оповещение
+def audio_message(path, time_here):
+    if round(time_here) % 10 == 0 and time_here != 0:  # каждый час выдаем звуковое оповещение
         wav = random.choice(os.listdir(path + r'\audio'))
         winsound.PlaySound(path + r'\audio\\' + wav, winsound.SND_FILENAME)
 
 
 def show_face_frame():
-    if len(faces) > 0:
+    if faces:
         bounding_box = faces[0]['box']
         keypoints = faces[0]['keypoints']
         cv2.rectangle(img,
@@ -83,27 +83,25 @@ path = r'C:\Users\VoronovEV\YandexDisk-euge.voronov@yandex.ru\Manual\Project\cha
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
 switch = True  # переключатель определяет есть лицо в кадре или нет
-min_time = 60  # минимально время которое не учитывается (в секундах)
+min_time = 10  # минимально время которое не учитывается (в секундах)
 
 detector = MTCNN()
 
 try:
-    while True:
-        ret, img = cap.read()
-        if ret == 0:
-            break
+    while cap.isOpened():
+        _, img = cap.read()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = detector.detect_faces(img)
         show_face_frame()
         audio_message(path, time_here)
 
-        if len(faces) > 0 and switch:
+        if faces and switch:
             not_here = 0
             switch = False
             if here == 0:
                 here = time.time()
                 print('вы сели за компьютер в ' + time.strftime("%H:%M:%S", time.localtime(here)))
-        elif len(faces) == 0 and not switch:
+        elif not faces and not switch:
             not_here = time.time()
             switch = True
 
