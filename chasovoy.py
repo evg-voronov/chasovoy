@@ -7,8 +7,10 @@ import random
 from mtcnn.mtcnn import MTCNN
 
 
-def audio_message(path, time_here):
-    if round(time_here) % 10 == 0 and time_here != 0:  # каждый час выдаем звуковое оповещение
+def audio_message(path, here):
+    if here == 0:
+        pass
+    elif time.strftime('%H', time.gmtime(time.time()-here)) == "01":
         wav = random.choice(os.listdir(path + r'\audio'))
         winsound.PlaySound(path + r'\audio\\' + wav, winsound.SND_FILENAME)
 
@@ -83,7 +85,7 @@ path = r'C:\Users\VoronovEV\YandexDisk-euge.voronov@yandex.ru\Manual\Project\cha
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
 switch = True  # переключатель определяет есть лицо в кадре или нет
-min_time = 10  # минимально время которое не учитывается (в секундах)
+min_time = 120  # минимально время которое не учитывается (в секундах)
 
 detector = MTCNN()
 
@@ -93,7 +95,7 @@ try:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = detector.detect_faces(img)
         show_face_frame()
-        audio_message(path, time_here)
+        audio_message(path, here)
 
         if faces and switch:
             not_here = 0
@@ -120,7 +122,7 @@ try:
             time_here, time_not_here = 0, 0
             here, not_here = 0, 0
 
-        cv2.waitKey(1)
+        cv2.waitKey(200)
 except KeyboardInterrupt:
     if time_here > min_time:  # делаем запись если провели за ПК больше минуты
         write_excel(path, here)
