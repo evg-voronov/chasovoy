@@ -10,7 +10,7 @@ from mtcnn.mtcnn import MTCNN
 def audio_message(path, here):
     if here == 0:
         pass
-    elif time.strftime('%H', time.gmtime(time.time()-here)) == "01":
+    elif time.strftime('%H:%M:%S', time.gmtime(time.time()-here)) == "01:00:00":
         wav = random.choice(os.listdir(path + r'\audio'))
         winsound.PlaySound(path + r'\audio\\' + wav, winsound.SND_FILENAME)
 
@@ -85,7 +85,8 @@ path = os.path.abspath(__file__)[:-11]  # удаляем имя файла
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
 switch = True  # переключатель определяет есть лицо в кадре или нет
-min_time = 120  # минимально время которое не учитывается (в секундах)
+min_time_here = 120  # минимально время для того, что бы сделать запись
+min_time_not_here = 300  # минимально время для того, что бы прекратить запись
 
 detector = MTCNN()
 
@@ -112,19 +113,19 @@ try:
         if here != 0 and not switch:
             time_here = time.time() - here
 
-        if time_here > min_time and time_not_here > min_time:  # делаем запись если провели за ПК больше min_time
+        if time_here > min_time_here and time_not_here > min_time_not_here:  # делаем запись если провели за ПК больше min_time_here
             write_excel(path, here)
             print('вы провели за компьютером ' + time.strftime('%H:%M:%S', time.gmtime(time.time() - here)))
             time_here, time_not_here = 0, 0
             here, not_here = 0, 0
-        elif time_not_here > min_time > time_here:  # если за ПК провели меньше min_time, то ничего не записываем
+        elif time_not_here > min_time_not_here and  time_here < min_time_here:  # если за ПК провели меньше min_time_here, то ничего не записываем
             print('запись не произведена')
             time_here, time_not_here = 0, 0
             here, not_here = 0, 0
 
         cv2.waitKey(200)
 except KeyboardInterrupt:
-    if time_here > min_time:  # делаем запись если провели за ПК больше минуты
+    if time_here > min_time_here:  # делаем запись если провели за ПК больше min_time_here
         write_excel(path, here)
     cap.release()
     cv2.destroyAllWindows()
