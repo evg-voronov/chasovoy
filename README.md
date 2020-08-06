@@ -11,13 +11,13 @@
 Статистика ведется в документе dnevnik.xlsx. Программа каждый день создает новый лист с текущей датой, в который заносится информация о проведенном времени за ПК. Функция `write_excel` делает запись каждый раз, когда посещение за компьютером превышает минимально заданное время (переменная min_time).
 
 <p align="left">
-  <img src="screenshot_readme/excel_1.png" height = 300 width = 500  /></div>
+  <img src="screenshot_readme/excel_1.png" height = 350 width = 600  /></div>
 </p>
 
 На 1 листе записывается посуточная информация, в какой день сколько времени провели за компьютером.
 
 <p align="left">
-  <img src="screenshot_readme/excel_2.png" height = 300 width = 500  /></div>
+  <img src="screenshot_readme/excel_2.png" height = 350 width = 600  /></div>
 </p>
 
 Функция `audio_message` отвечает за звуковое оповещение, о необходимости сделать перерыв. В папке audio хранятся wav файлы, которые выбираются рандомным образом.
