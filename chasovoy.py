@@ -25,7 +25,7 @@ def show_face_frame():
                       (0, 0, 255),
                       2)
         cv2.circle(img, (keypoints['left_eye']), 3, (0, 0, 255), 2)
-        cv2.circle(img, (keypoints['right_eye']), 2, (0, 0, 255), 2)
+        cv2.circle(img, (keypoints['right_eye']), 3, (0, 0, 255), 2)
         cv2.circle(img, (keypoints['nose']), 3, (0, 0, 255), 2)
         cv2.circle(img, (keypoints['mouth_left']), 3, (0, 0, 255), 2)
         cv2.circle(img, (keypoints['mouth_right']), 3, (0, 0, 255), 2)
@@ -80,13 +80,13 @@ def write_excel(path_excel, time_start):
 
 
 cap = cv2.VideoCapture(0)
-path = os.path.abspath(__file__)[:-11]  # удаляем имя файла
+path = os.path.abspath(__file__)[:-11]  # из абсолютного пути удаляем имя файла
 
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
 switch = True  # переключатель определяет есть лицо в кадре или нет
-min_time_here = 300  # минимально время для того, что бы сделать запись
-min_time_not_here = 120  # минимально время для того, что бы прекратить запись
+min_time_here = 300  # минимально время проведенное за пк, после которого производится запись (в секундах)
+min_time_not_here = 120  # максимальное время отвлечение от компьютера которое не учитывается программой (в секундах)
 
 detector = MTCNN()
 
@@ -95,7 +95,7 @@ try:
         _, img = cap.read()
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = detector.detect_faces(img)
-        # show_face_frame()
+        show_face_frame()
         audio_message(path, here)
 
         if faces and switch:
@@ -118,7 +118,7 @@ try:
             print('вы провели за компьютером ' + time.strftime('%H:%M:%S', time.gmtime(time.time() - here)))
             time_here, time_not_here = 0, 0
             here, not_here = 0, 0
-        elif time_not_here > min_time_not_here and  time_here < min_time_here:  # если за ПК провели меньше min_time_here, то ничего не записываем
+        elif time_not_here > min_time_not_here and time_here < min_time_here:  # если за ПК провели меньше min_time_here, то ничего не записываем
             print('запись не произведена')
             time_here, time_not_here = 0, 0
             here, not_here = 0, 0
