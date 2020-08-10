@@ -80,7 +80,7 @@ def write_excel(path_excel, time_start):
 
 
 cap = cv2.VideoCapture(0)
-path = os.path.abspath(__file__)[:-11]  # из абсолютного пути удаляем имя файла
+path = os.path.dirname(os.path.abspath(__file__))  # из абсолютного пути удаляем имя файла
 
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
