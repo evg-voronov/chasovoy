@@ -29,7 +29,7 @@ def show_face_frame():
         cv2.circle(img, (keypoints['nose']), 3, (0, 0, 255), 2)
         cv2.circle(img, (keypoints['mouth_left']), 3, (0, 0, 255), 2)
         cv2.circle(img, (keypoints['mouth_right']), 3, (0, 0, 255), 2)
-    cv2.imshow('frame', img)
+    #cv2.imshow('frame', img)
 
 
 def write_excel(path_excel, time_start):
@@ -80,7 +80,7 @@ def write_excel(path_excel, time_start):
 
 
 cap = cv2.VideoCapture(0)
-path = os.path.dirname(os.path.abspath(__file__))  # из абсолютного пути удаляем имя файла
+path = os.path.dirname(os.path.abspath(__file__))
 
 here, not_here = 0, 0  # секундомеры
 time_here, time_not_here = 0, 0  # количество времени
