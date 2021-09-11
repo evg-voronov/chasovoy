@@ -30,32 +30,33 @@ class Excel:
 
     def extract_info(self):
         self.sheet = self.wb[self.today]
-        row = self.sheet['E1'].value  # номер строки в excel документе
-        all_time = self.sheet['E2'].value  # общее время проведенное за ПК за один день
-        all_time = all_time.split(':')
-        self.row = row + 2  # плюсуем шапку таблицы и новую строку
-        self.all_time = int(all_time[0]) * 3600 + int(all_time[1]) * 60 + int(all_time[2])  # время переводим в секунды
+        self.row = self.sheet['E1'].value  # line number in excel document
+        self.all_time = self.sheet['E2'].value  # total time spent on PC in one day
+        self.all_time = self.all_time.split(':')
+        self.row = self.row + 2  # add the table header and a new line
+        # we convert time into seconds
+        self.all_time = int(self.all_time[0]) * 3600 + int(self.all_time[1]) * 60 + int(self.all_time[2])
 
     def record(self, start_work, time_break):
+        # we write down the time when we sat down at the PC
         self.sheet['A' + str(self.row)] = time.strftime("%H:%M:%S",
-                                                        time.localtime(start_work))  # записываем время когда сели за пк
+                                                        time.localtime(start_work))
         self.sheet['C' + str(self.row)] = time.strftime("%H:%M:%S", time.localtime(
-            time.time() - time_break))  # когда вышли из за пк
-        seconds = time.time() - start_work - time_break  # время которое мы провели за компьютером
-        print(time.time(), start_work, time_break)
+            time.time() - time_break))  # when left from the PC
+        seconds = time.time() - start_work - time_break  # the time we spent at the computer
         self.sheet['B' + str(self.row)] = time.strftime('%H:%M:%S', time.gmtime(seconds))
-        self.sheet['E1'] = self.row - 1  # вычитаем шапку таблицу
-        all_time = self.all_time + seconds
-        all_time = time.strftime('%H:%M:%S', time.gmtime(all_time))
-        self.sheet['E2'] = all_time
-        # заполняем первый лист
+        self.sheet['E1'] = self.row - 1  # subtract the table header
+        self.all_time = self.all_time + seconds
+        self.sheet['E2'] = time.strftime('%H:%M:%S', time.gmtime(self.all_time))
+        # fill in the first sheet
         sheet_0 = self.wb.worksheets[0]
         sheet_0['A' + str(len(self.wb.sheetnames))] = self.today
-        sheet_0['B' + str(len(self.wb.sheetnames))] = self.all_time
+        sheet_0['B' + str(len(self.wb.sheetnames))] = time.strftime('%H:%M:%S', time.gmtime(self.all_time))
+        self.row += 1
 
-    def __del__(self):
+    def close_file(self):
         open = True
-        while open:  # закрываем файл
+        while open:  # close the file
             try:
                 self.wb.save('log.xlsx')
                 open = False
@@ -80,10 +81,6 @@ class SessionWork:
         if self.start_break == 0 and self.start_work != 0:
             self.start_break = time.time()
 
-    def record(self):
-        print(f"запись: {self.time_work}")
-        SessionWork.__init__(self)
-
     def status(self):
         if self.start_work != 0 and self.start_break == 0:
             self.time_work = time.time() - self.start_work
@@ -103,8 +100,8 @@ class SessionWork:
 
 cap = cv2.VideoCapture(0)
 detector = MTCNN()
-min_time_work = 4  # 1800  # seconds. The minimum time after which the recording in Excel
-min_time_break = 2  # 300  # seconds. The minimum break time after which the recording in Excel
+min_time_work = 1800  # seconds. The minimum time after which the recording in Excel
+min_time_break = 300  # seconds. The minimum break time after which the recording in Excel
 I = SessionWork()
 today = time.strftime("%d.%m.%Y", time.localtime(time.time()))
 excel_sheet = Excel(today)
@@ -126,8 +123,9 @@ while cap.isOpened():
     if I.time_work > min_time_work and I.time_break > min_time_break:
         excel_sheet.record(I.start_work, I.time_break)
         print("record")
-        del excel_sheet
-    I.show_faces(img, faces)
+        I.__init__()
+        excel_sheet.close_file()
+    #I.show_faces(img, faces)
     cv2.waitKey(800)
 
 cap.release()
