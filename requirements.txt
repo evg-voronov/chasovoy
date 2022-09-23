@@ -3,5 +3,5 @@ openpyxl==3.0.3
 tensorflow==1.12.3
 keras==2.2.4
 numpy == 1.16.4
-protobuf==3.6.0
+protobuf==3.18.3
 mtcnn
